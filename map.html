@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Geolocation</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.79.0/dist/L.Control.Locate.min.css" />  
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+		}
+	</style>
+
+</head>
+
+<body>
+	<div id="map" style="width:100%; height: 100vh"></div>
+	<script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+	<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.79.0/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+
+
+	<script>
+
+		var map = L.map('map').setView([25.5941, 85.1376], 11);
+		mapLink = "<a href='http://openstreetmap.org'>OpenStreetMap</a>";
+		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', { attribution: 'Leaflet &copy; ' + mapLink + ', contribution', maxZoom: 18 }).addTo(map);
+
+		var busIcon = L.icon({
+			iconUrl: 'img/bus.png',
+			iconSize: [40, 40]
+		})
+
+		var marker = L.marker([25.5941, 85.1376], { icon: busIcon }).addTo(map);
+
+		map.on('click', function (e) {
+			console.log(e)
+			var newMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+			L.Routing.control({
+				waypoints: [
+					L.latLng(25.5941, 85.1376),
+					L.latLng(e.latlng.lat, e.latlng.lng)
+				]
+			}).on('routesfound', function (e) {   
+				var routes = e.routes;
+				console.log(routes);
+
+				e.routes[0].coordinates.forEach(function (coord, index) {
+					setTimeout(function () {
+						marker.setLatLng([coord.lat, coord.lng]);
+					}, 100 * index)
+				})
+
+			}).addTo(map);
+		});
+
+		//Geolocation
+		if(navigator.geolocation){
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					const pos = {
+						lat: position.coords.latitude,
+						lng: position.coords.longitude,
+					};
+
+					const marker = new google.maps.Marker({
+						position: pos,
+					});
+					marker.setMap(map)
+					map.setCenter(pos);
+					map.setZoom(11)
+				}
+			);
+		} else{
+			console.log('Geolocatio is not supported by your browser')
+		}
+		L.Control.geocoder().addTo(map);
+		L.control.locate().addTo(map);
+
+	</script>
+
+
+</body>
+
+</html>
